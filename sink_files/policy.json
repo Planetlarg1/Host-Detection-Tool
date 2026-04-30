@@ -1,0 +1,26 @@
+{
+  "hosts": {
+    "user1": "192.168.100.1",
+    "user2": "192.168.100.2",
+    "user3": "192.168.100.3",
+    "user4": "192.168.100.4",
+    "user5": "192.168.100.5",
+    "sink": "192.168.100.10"
+  },
+  "rules": {
+    "outbound_ssh": {
+      "user1": ["user1", "user2", "user3", "user4", "user5"],
+      "user2": ["user2", "user3", "user4", "user5"],
+      "user3": ["user3", "user5"],
+      "user4": ["user4", "user5"],
+      "user5": ["user5"]
+    },
+    "scp_transfer": {
+      "user1": ["user1"],
+      "user2": ["user2", "user1"],
+      "user3": ["user3", "user4", "user2", "user1"],
+      "user4": ["user4", "user3", "user2", "user1"],
+      "user5": ["user5", "user1", "user2", "user3", "user4"]
+    }
+  }
+}

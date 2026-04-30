@@ -1,0 +1,6 @@
+.git-credentials
+.cache/
+.viminfo
+__pycache__/
+*.pyc
+.env

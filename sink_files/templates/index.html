@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Security Dashboard</title>
+	<meta http-equiv="refresh" content="20">
+	<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+	<main class="shell">
+		<header class="dashbaord-header">
+			<div class="titlewrap">
+				<h1>Security Dashboard</h1>
+				<p>Central monitoring and alert review for unauthorised host activity.</p>
+			</div>
+
+			<aside class="card admin-panel">
+				<div class="admin-label">Welcome</div>
+				<div class="admin-name">{{ username}}</div>
+				<a class="logout-link" href="/logout">Log Out</a>
+			</aside>
+		</header>
+
+		<section class="metrics">
+			<article class="card metric-card metric-alert">
+				<p class="metric-label">Total Alerts</p>
+				<p class="metric-value">{{ alerts|length }}</p>
+				<p class="metric-note">Unauthorised events requiring action.</p>
+			</article>
+
+			<article class="card metric-card">
+				<p class="metric-label">Latest Event Type</p>
+				<p class="metric-value">
+					{% if alerts %}
+						{{ alerts[0].event_type }}
+					{% else %}
+						None
+					{% endif %}
+				</p>
+				<p class="metric-note">Most recent alert category.<p>
+			</article>
+
+			<article class="card metric-card metric-ok">
+				<p class="metric-label">System State</p>
+				<p class="metric-value">
+					{% if alerts %}
+						Review
+					{% else %}
+						Clear
+					{% endif %}
+				</p>
+				<p class="metric-note">Current dashboard status indicator.</p>
+			</article>
+		</section>
+
+		<section class="host-metrics">
+			<article class="card metric-table-card accent-card">
+				<h2 class="section-title">Top Offending Hosts</h2>
+
+				{% if highest_offendors %}
+					<table class="mini-table">
+						<thead>
+							<tr>
+								<th>Host</th>
+								<th>Alerts</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for host, count in highest_offendors %}
+								<tr>
+									<td>{{ host }}</td>	
+									<td>{{ count }}</td>
+								</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				{% else %}
+					<div class="empty-state">No source host data available.</div>
+				{% endif %}
+			</article>
+
+			<article class="card metric-table-card accent-card">
+				<h2 class="section-title">Most Targeted Hosts</h2>
+
+				{% if highest_dests %}
+					<table class="mini-table">
+						<thead>
+							<tr>
+								<th>Host</th>
+								<th>Alerts</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for host, count in highest_dests %}
+								<tr>
+									<td>{{ host }}</td>
+									<td>{{ count }}</td>
+								</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				{% else %}
+					<div class="empty-state">No destination host data available.</div>
+				{% endif %}
+			</article>
+		</section>
+
+		<section class="chart-row">
+			<article class="card chart-card accent-card">
+				<div class="chart-header">
+					<h2 class="section-title">Distribution of Alert Types</h2>
+				</div>
+
+				{% if event_type_distribution %}
+					<div class="chart-container">
+						<canvas id="eventTypeChart"></canvas>
+					</div>
+				{% else %}
+					<div class="empty-state">No alert type data available.</div>
+				{% endif %}
+			</article>
+		</section>
+
+		<section class="card table-card accent-card">
+			<div class="table-header">
+				<h2 class="section-title">Recent Alerts</h2>
+				{% if alerts %}
+				<form method="POST" action="/dismiss-all">
+					<button class="btn clear-btn" type="submit">Clear All Alerts</button>
+				</form>
+				{% endif %}
+			</div>
+
+			{% if alerts %}
+				<div class="table-wrap">
+					<table>
+						<thead>
+							<tr>
+								<th>Time</th>
+								<th>Source Host</th>
+								<th>Destination</th>
+								<th>Event Type</th>
+								<th>Result</th>
+								<th>Reason</th>
+								<th>Action</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for alert in alerts %}
+								<tr>
+									<td class="time-cell">{{ alert.display_time or "N/A" }}</td>
+									<td>{{ alert.src_host or "N/A" }}</td>
+									<td>{{ alert.dst_host or alert.dst_ip or "N/A" }}</td>
+									<td>{{ alert.event_type or "N/A" }}</td>
+									<td>
+										<span class = "badge {% if alert.result == 'Unauthorised' %}badge-alert{% else%}badge-ok{% endif %}">
+											{{ alert.result or "Unauthorised" }}
+										</span>
+									</td>
+									<td class="reason">{{ alert.reason or "No reason provided" }}</td>
+									<td>
+										<form method="POST" action="/dismiss/{{ alert.alert_id }}">
+											<button class="dismiss-btn", type="submit">Dismiss</button>
+										</form>
+									</td>
+								<tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+			{% else %}
+				<div class="empty-state">No alerts detected.</div>
+			{% endif %}
+		</section>
+	</main>
+
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<script src="{{ url_for('static', filename='js/chart.js') }}"></script>
+
+	{% if event_type_distribution %}
+		<script>
+			const eventTypeLabels = {{ event_type_distribution.keys() | list | tojson }};
+			const eventTypeCounts = {{ event_type_distribution.values() | list | tojson }};
+			renderEventTypeChart(eventTypeLabels, eventTypeCounts);
+		</script>
+	{% endif %}
+</body>
+</html>
